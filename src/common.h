@@ -45,7 +45,7 @@ __unused static void LogSelectorError(id object, SEL selector) {
 static char *kPropertyKey_didDrawPlaceholder;
 
 // Preferences
-#define PREFERENCES_PLIST_PATH @"/var/mobile/Library/Preferences/com.carplayenable.preferences.plist"
+#define PREFERENCES_PLIST_PATH @"/var/jb/Library/Preferences/com.carplayenable.preferences.plist"
 #define PREFERENCES_CHANGED_NOTIFICATION @"com.carplay.preferences.changed"
 #define PREFERENCES_APP_DATA_NOTIFICATION @"com.carplay.prefs.app_data"
 #define kPrefsAppDataRequesting @"Requesting"

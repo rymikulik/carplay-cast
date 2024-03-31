@@ -3,10 +3,12 @@ TARGET = iphone:clang:15.6:15.6
 
 include $(THEOS)/makefiles/common.mk
 
+THEOS_PACKAGE_SCHEME=rootless
+
 BUNDLE_NAME = carplayenableprefs
 
 carplayenableprefs_FILES = $(wildcard *.m) ../src/CRPreferences.mm
-carplayenableprefs_INSTALL_PATH = /Library/PreferenceBundles
+carplayenableprefs_INSTALL_PATH = /var/jb/Library/PreferenceBundles
 carplayenableprefs_FRAMEWORKS = UIKit
 carplayenableprefs_PRIVATE_FRAMEWORKS = Preferences
 carplayenableprefs_CFLAGS = -fobjc-arc
@@ -14,5 +16,6 @@ carplayenableprefs_CFLAGS = -fobjc-arc
 include $(THEOS_MAKE_PATH)/bundle.mk
 
 internal-stage::
-	$(ECHO_NOTHING)mkdir -p $(THEOS_STAGING_DIR)/Library/PreferenceLoader/Preferences$(ECHO_END)
-	$(ECHO_NOTHING)cp entry.plist $(THEOS_STAGING_DIR)/Library/PreferenceLoader/Preferences/carplayenableprefs.plist$(ECHO_END)
+	mkdir -p $(THEOS_STAGING_DIR)/var/jb/Library/PreferenceLoader/Preferences
+	cp entry.plist $(THEOS_STAGING_DIR)/var/jb/Library/PreferenceLoader/Preferences/carplayenableprefs.plist
+	

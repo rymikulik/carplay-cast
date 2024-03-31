@@ -24,6 +24,6 @@ test::
 	install.exec "cycript -p SpringBoard" < tests/springboard_tests.cy
 	install.exec "cycript -p CarPlay" < tests/carplay_tests.cy
 
-# SUBPROJECTS += carplayenableprefs
+SUBPROJECTS += carplayenableprefs
 
 include $(THEOS_MAKE_PATH)/aggregate.mk
