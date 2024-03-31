@@ -274,7 +274,14 @@ id getCarplayCADisplay(void)
     id mainScreenIdentity = objcInvoke(displaySceneManager, @"displayIdentity");
     assertGotExpectedObject(mainScreenIdentity, @"FBSDisplayIdentity");
 
-    id sceneIdentity = objcInvoke_2(displaySceneManager, @"_sceneIdentityForApplication:createPrimaryIfRequired:", self.application, 1);
+    id sceneIdentity = nil;
+    if ([displaySceneManager respondsToSelector:NSSelectorFromString(@"_sceneIdentityForApplication:createPrimaryIfRequired:")]) {
+        sceneIdentity = objcInvoke_2(displaySceneManager, @"_sceneIdentityForApplication:createPrimaryIfRequired:", self.application, 1);
+    }
+    else if ([displaySceneManager respondsToSelector:NSSelectorFromString(@"_sceneIdentityForApplication:createPrimaryIfRequired:sceneSessionRole:")]) {
+        sceneIdentity = objcInvoke_3(displaySceneManager, @"_sceneIdentityForApplication:createPrimaryIfRequired:sceneSessionRole:", self.application, 1, @"UIWindowSceneSessionRoleApplication");
+    }
+
     assertGotExpectedObject(sceneIdentity, @"FBSSceneIdentity");
 
     id sceneHandleRequest = objcInvoke_3(objc_getClass("SBApplicationSceneHandleRequest"), @"defaultRequestForApplication:sceneIdentity:displayIdentity:", self.application, sceneIdentity, mainScreenIdentity);
@@ -349,7 +356,14 @@ id getCarplayCADisplay(void)
 
     // Create a scene monitor to watch for the app process dying. The carplay window will dismiss itself.
     // todo: this returns nil if the app process isn't running..
-    NSString *sceneID = objcInvoke_1(sceneLayoutManager, @"primarySceneIdentifierForBundleIdentifier:", appIdentifier);
+    NSString *sceneID = nil;
+    if ([sceneLayoutManager respondsToSelector:NSSelectorFromString(@"primarySceneIdentifierForBundleIdentifier:")]) {
+        sceneID = objcInvoke_1(sceneLayoutManager, @"primarySceneIdentifierForBundleIdentifier:", appIdentifier);
+    }
+    else if ([sceneLayoutManager respondsToSelector:NSSelectorFromString(@"primarySceneIdentifierForBundleIdentifier:sceneSessionRole:")]) {
+        sceneID = objcInvoke_2(sceneLayoutManager, @"primarySceneIdentifierForBundleIdentifier:sceneSessionRole:", appIdentifier, @"UIWindowSceneSessionRoleApplication");
+    }
+
     self.sceneMonitor = objcInvoke_1([objc_getClass("FBSceneMonitor") alloc], @"initWithSceneID:", sceneID);
     objcInvoke_1(self.sceneMonitor, @"setDelegate:", self);
 }
@@ -463,7 +477,7 @@ When a CarPlay App is closed
                 id sceneSettings = objcInvoke(appScene, @"mutableSettings");
                 objcInvoke_1(sceneSettings, @"setBackgrounded:", 1);
                 objcInvoke_1(sceneSettings, @"setForeground:", 0);
-                ((void (*)(id, SEL, id, id, void *))objc_msgSend)(appScene, NSSelectorFromString(@"updateSettings:withTransitionContext:completion:"), sceneSettings, nil, 0);
+              //  ((void (*)(id, SEL, id, id))objc_msgSend)(appScene, NSSelectorFromString(@"updateSettings:withTransitionContext:"), sceneSettings, nil);
             }
         }
 
@@ -568,6 +582,7 @@ Handle resizing the Carplay App window. Called anytime the app orientation chang
         xOrigin = (carplayDisplaySize.width / 2) - (scaledDisplayWidth / 2);
     }
 
+    NSLog(@"Scaling app view to %.2fx%.2f (target size: %.2fx%.2f)", widthScale, heightScale, carplayDisplaySize.width, carplayDisplaySize.height);
     [hostingContentView setTransform:CGAffineTransformMakeScale(widthScale, heightScale)];
     [[self.appViewController view] setFrame:CGRectMake(xOrigin, [[self.appViewController view] frame].origin.y, carplayDisplaySize.width, carplayDisplaySize.height)];
 

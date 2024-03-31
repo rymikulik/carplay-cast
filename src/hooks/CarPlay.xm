@@ -98,7 +98,7 @@ Include all User applications on the CarPlay dashboard
         id appState = objcInvoke(appProxy, @"appState");
         if (objcInvokeT(appState, @"isValid", int) == 1)
         {
-            objcInvoke_2(allAppsLibrary, @"addApplicationProxy:withOverrideURL:", appProxy, 0);
+         //   objcInvoke_2(allAppsLibrary, @"addApplicationProxy:withOverrideURL:", appProxy, 0);
         }
     }
 

@@ -183,8 +183,9 @@ happen while the device is in a faceup/facedown orientation.
 Called when something is trying to change a scene's settings (including sending it to background/foreground).
 Use this to prevent the App from going to sleep when other applications are launched on the main screen.
 */
-- (void)updateSettings:(id)arg1 withTransitionContext:(id)arg2 completion:(void *)arg3
+- (void)_updateSettings:(id)arg1 withTransitionContext:(id)arg2 completion:(void *)arg3
 {
+    LOG_LIFECYCLE_EVENT;
     id sceneClient = objcInvoke(self, @"client");
     if ([sceneClient respondsToSelector:NSSelectorFromString(@"process")])
     {
@@ -200,6 +201,14 @@ Use this to prevent the App from going to sleep when other applications are laun
     }
 
     %orig;
+}
+
+/*
+ The scene's client getter method was removed in iOS 15 but the ivar is still accessible
+*/ 
+%new
+- (id)client {
+    return getIvar(self, @"_client");
 }
 
 %end
