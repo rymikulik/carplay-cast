@@ -18,13 +18,21 @@
         NSArray *components = [func componentsSeparatedByString:@"$"]; \
         func = [NSString stringWithFormat:@"[%@ %@]", components[2], components[3]]; \
     } \
-    NSLog(@"LOG_LIFECYCLE_EVENT %@", func); \
+    NSLog(@"carplayenable LOG_LIFECYCLE_EVENT %@", func); \
 }
 
 #define getIvar(object, ivar) [object valueForKey:ivar]
 #define setIvar(object, ivar, value) [object setValue:value forKey:ivar]
 
-#define objcInvokeT(a, b, t) ((t (*)(id, SEL))objc_msgSend)(a, NSSelectorFromString(b))
+__unused static void LogSelectorError(id object, SEL selector) {
+    NSLog(@"carplayenable error: %@ does not respond to selector %@", object, NSStringFromSelector(selector));
+}
+
+#define objcInvokeT(a, b, t) \
+    ([a respondsToSelector:NSSelectorFromString(b)] ? \
+    ((t (*)(id, SEL))objc_msgSend)(a, NSSelectorFromString(b)) : \
+    (LogSelectorError(a, NSSelectorFromString(b)), (t)0))
+
 #define objcInvoke(a, b) objcInvokeT(a, b, id)
 #define objcInvoke_1(a, b, c) ((id (*)(id, SEL, typeof(c)))objc_msgSend)(a, NSSelectorFromString(b), c)
 #define objcInvoke_2(a, b, c, d) ((id (*)(id, SEL, typeof(c), typeof(d)))objc_msgSend)(a, NSSelectorFromString(b), c, d)
