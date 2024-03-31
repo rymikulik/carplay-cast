@@ -328,7 +328,11 @@ id getCarplayCADisplay(void)
                     {
                         return;
                     }
-                    id sceneSettings = objcInvoke(appScene, @"mutableSettings");
+
+                    id sceneSettings = objcInvoke(appScene, @"settings");
+                    sceneSettings = objcInvoke(sceneSettings, @"mutableCopy");
+                    assertGotExpectedObject(sceneSettings, @"UIMutableApplicationSceneSettings");
+
                     objcInvoke_1(sceneSettings, @"setInterfaceOrientation:", self.orientation);
                     id snapshotContext = objcInvoke_2(objc_getClass("FBSSceneSnapshotContext"), @"contextWithSceneID:settings:", objcInvoke(appScene, @"identifier"), sceneSettings);
                     objcInvoke_1(snapshotContext, @"setName:", @"CarPlayLaunchImage");
@@ -474,10 +478,13 @@ When a CarPlay App is closed
             BOOL isAppOnMainScreen = frontmostApp && [objcInvoke(frontmostApp, @"bundleIdentifier") isEqualToString:sceneAppBundleID];
             if (!isAppOnMainScreen)
             {
-                id sceneSettings = objcInvoke(appScene, @"mutableSettings");
+                id sceneSettings = objcInvoke(appScene, @"settings");
+                sceneSettings = objcInvoke(sceneSettings, @"mutableCopy");
+                assertGotExpectedObject(sceneSettings, @"UIMutableApplicationSceneSettings");
+
                 objcInvoke_1(sceneSettings, @"setBackgrounded:", 1);
                 objcInvoke_1(sceneSettings, @"setForeground:", 0);
-              //  ((void (*)(id, SEL, id, id))objc_msgSend)(appScene, NSSelectorFromString(@"updateSettings:withTransitionContext:"), sceneSettings, nil);
+               ((void (*)(id, SEL, id, id, id))objc_msgSend)(appScene, NSSelectorFromString(@"updateSettings:withTransitionContext:completion:"), sceneSettings, nil, ^{});
             }
         }
 
@@ -492,7 +499,7 @@ When a CarPlay App is closed
             }
         }
 
-        objc_setAssociatedObject(sharedApp, &kPropertyKey_liveCarplayWindow, nil, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+        objc_setAssociatedObject(sharedApp, &kPropertyKey_liveCarplayWindow, nil, OBJC_ASSOCIATION_RETAIN);
         // todo: resign first responder (kb causes glitches on return)
 
         [self.rootWindow removeFromSuperview];
