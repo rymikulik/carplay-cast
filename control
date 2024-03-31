@@ -2,7 +2,7 @@ Package: com.cortex.carplayenable
 Name: CarPlayEnable
 Depends: firmware (>= 14.0), mobilesubstrate, preferenceloader
 Version: 1.0.1
-Architecture: iphoneos-arm
+Architecture: iphoneos-arm64
 Description: Use any app with CarPlay
 Maintainer: Cortex
 Author: Cortex

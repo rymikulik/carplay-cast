@@ -1,11 +1,13 @@
 ARCHS = arm64 arm64e
-TARGET = iphone:clang:13.5.1:13.5.1
+TARGET = iphone:15.6:15.6
 
 include $(THEOS)/makefiles/common.mk
 
 TWEAK_NAME = carplayenable
 carplayenable_FILES = $(wildcard src/hooks/*.xm) $(wildcard src/*.mm) $(wildcard src/crash_reporting/*.mm)
 carplayenable_PRIVATE_FRAMEWORKS += CoreSymbolication
+
+THEOS_PACKAGE_SCHEME=rootless
 
 include $(THEOS_MAKE_PATH)/tweak.mk
 
@@ -22,6 +24,6 @@ test::
 	install.exec "cycript -p SpringBoard" < tests/springboard_tests.cy
 	install.exec "cycript -p CarPlay" < tests/carplay_tests.cy
 
-SUBPROJECTS += carplayenableprefs
+# SUBPROJECTS += carplayenableprefs
 
 include $(THEOS_MAKE_PATH)/aggregate.mk
