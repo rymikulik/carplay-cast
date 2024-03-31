@@ -68,7 +68,7 @@ When an app icon is tapped on the Carplay dashboard
 
         // Launch the requested app
         liveCarplayWindow = [[CRCarPlayWindow alloc] initWithBundleIdentifier:identifier];
-        objc_setAssociatedObject(self, &kPropertyKey_liveCarplayWindow, liveCarplayWindow, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+        objc_setAssociatedObject(self, &kPropertyKey_liveCarplayWindow, liveCarplayWindow, OBJC_ASSOCIATION_RETAIN);
     }
     @catch (NSException *exception)
     {
@@ -89,7 +89,7 @@ Invoked when SpringBoard finishes launching
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(carplayIsConnectedChanged) name:@"CarPlayIsConnectedDidChange" object:nil];
 
     NSMutableArray *appIdentifiersToIgnoreLockAssertions = [[NSMutableArray alloc] init];
-    objc_setAssociatedObject(self, &kPropertyKey_lockAssertionIdentifiers, appIdentifiersToIgnoreLockAssertions, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+    objc_setAssociatedObject(self, &kPropertyKey_lockAssertionIdentifiers, appIdentifiersToIgnoreLockAssertions, OBJC_ASSOCIATION_RETAIN);
 
     %orig;
 
@@ -183,7 +183,7 @@ happen while the device is in a faceup/facedown orientation.
 Called when something is trying to change a scene's settings (including sending it to background/foreground).
 Use this to prevent the App from going to sleep when other applications are launched on the main screen.
 */
-- (void)_updateSettings:(id)arg1 withTransitionContext:(id)arg2 completion:(void *)arg3
+- (void)updateSettings:(id)arg1 withTransitionContext:(id)arg2 completion:(id)arg3
 {
     LOG_LIFECYCLE_EVENT;
     id sceneClient = objcInvoke(self, @"client");
@@ -259,6 +259,29 @@ Is this a main-screen scene view for an application that is being hosted on the 
     return NO;
 }
 
+/*
+ * Determine if this sceneview is what is being displayed on the carplay screen
+*/
+%new
+- (BOOL)isHostingContentOnCarplayScreen {
+    LOG_LIFECYCLE_EVENT;
+    
+    id liveCarplayWindow = objcInvoke([UIApplication sharedApplication], @"liveCarplayWindow");
+    if (liveCarplayWindow != nil)
+    {
+        id liveAppViewController = [liveCarplayWindow appViewController];
+        id carplaySceneHandle = objcInvoke(liveAppViewController, @"sceneHandle");
+        if ([carplaySceneHandle isEqual:objcInvoke(self, @"sceneHandle")])
+        {
+            id carplayAppViewController = getIvar(liveAppViewController, @"_deviceAppViewController");
+            id carplayAppSceneView = objcInvoke(carplayAppViewController, @"_sceneView");
+            return carplayAppSceneView && [self isEqual:carplayAppSceneView];
+        }
+    }
+
+    return NO;
+}
+
 - (void)layoutSubviews
 {
     %orig;
@@ -277,19 +300,37 @@ Is this a main-screen scene view for an application that is being hosted on the 
         // The placeholder view will try to match the orientation of the application, which if running on Carplay may not match the orientation of the main screen.
         // Force the UI to match the main screens orientation. This will end up calling -layoutSubviews again
         objcInvoke(self, @"rotateToDeviceOrientation");
-
         UIView *backgroundView = objcInvoke(self, @"backgroundView");
-        int deviceOrientation = [[UIDevice currentDevice] orientation];
+        if (backgroundView == nil) {
+            return;
+        }
+
         // Draw the Carplay placeholder UI, but only if this view is being layed out in the correct orientation.
         // It is expected that this method will be called at least once while the view is in the wrong orientation
         BOOL bgIsLandscape = [backgroundView frame].size.width > [backgroundView frame].size.height;
-        BOOL deviceIsLandscape = UIInterfaceOrientationIsLandscape(deviceOrientation);
+        BOOL deviceIsLandscape = UIInterfaceOrientationIsLandscape([[UIDevice currentDevice] orientation]);
         if (bgIsLandscape == deviceIsLandscape)
         {
             // Orientation expectation satisfied
             objcInvoke(self, @"drawCarplayPlaceholder");
         }
     }
+}
+
+- (id)homeGrabberView {
+    LOG_LIFECYCLE_EVENT;
+
+    id homeGrabberView = %orig;
+    if (!homeGrabberView) {
+        return homeGrabberView;
+    }
+
+    if (objcInvokeT(self, @"isHostingContentOnCarplayScreen", BOOL)) {        
+        objcInvoke_3(homeGrabberView, @"setHidden:forReason:withAnimationSettings:", YES, @"CarPlay", nil);
+        objcInvoke_1(homeGrabberView, @"setUserInteractionEnabled:", NO);
+    }
+
+    return homeGrabberView;
 }
 
 /*
@@ -334,6 +375,11 @@ the carplay screen, the mainscreen will show a blurred background with a label.
     // The background view may have already been drawn on. Use an associated object to determine if its already been handled for this orientation
     // If it was drawn for a different orientation, start fresh
     UIView *backgroundView = objcInvoke(self, @"backgroundView");
+    if (backgroundView == nil) {
+        NSLog(@"On-device app scene for a carplay-hosted app has a nil background view");
+        return;
+    }
+
     id _drawnForOrientation = objc_getAssociatedObject(backgroundView, &kPropertyKey_didDrawPlaceholder);
     int drawnForOrientation = (_drawnForOrientation) ? [_drawnForOrientation intValue] : -1;
     if (drawnForOrientation != deviceOrientation)
@@ -351,7 +397,7 @@ the carplay screen, the mainscreen will show a blurred background with a label.
         }
 
         // Set associated object to avoid redrawing if no orientation changes have happened
-        objc_setAssociatedObject(backgroundView, &kPropertyKey_didDrawPlaceholder, @(deviceOrientation), OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+        objc_setAssociatedObject(backgroundView, &kPropertyKey_didDrawPlaceholder, @(deviceOrientation), OBJC_ASSOCIATION_RETAIN);
 
         // [[UIScreen mainscreen] bounds] may not be using the correct orientation. Get screen bounds for explicit orientation
         CGRect screenBounds = ((CGRect (*)(id, SEL, int))objc_msgSend)([UIScreen mainScreen], NSSelectorFromString(@"boundsForOrientation:"), deviceOrientation);

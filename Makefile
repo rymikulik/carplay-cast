@@ -16,6 +16,7 @@ after-carplayenable-stage::
 	cp postinst_postrm $(THEOS_STAGING_DIR)/DEBIAN/postinst
 	cp postinst_postrm $(THEOS_STAGING_DIR)/DEBIAN/postrm
 	chmod +x $(THEOS_STAGING_DIR)/DEBIAN/post*
+	find $(THEOS_STAGING_DIR) -name ".DS_Store" -delete
 
 after-install::
 	install.exec "killall -9 SpringBoard CarPlay Preferences"
